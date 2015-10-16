@@ -4,17 +4,24 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.parse.Parse;
+import com.parse.ParseFile;
+import com.parse.ParseObject;
+import com.parse.ProgressCallback;
+import com.parse.SaveCallback;
+
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -31,6 +38,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         btnPicture = (Button) this.findViewById(R.id.btnTakePic);
         imgPicture = (ImageView) this.findViewById(R.id.picture);
         btnPicture.setOnClickListener(this);
+        Parse.enableLocalDatastore(this);
+        Parse.initialize(this, "qCcFWfzcE4l0DX7syR9XSARS5EUB9s0CxVbyGmd8", "LeollugPtzuXaBfmhC93vr1pmzxaqSYa99DKt3F3");
+        Log.d("MainResult", "Inicializamos Parse");
     }
 
 
@@ -84,6 +94,39 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 stream = getContentResolver().openInputStream(intent.getData());
                 bitmap = BitmapFactory.decodeStream(stream);
                 imgPicture.setImageBitmap(bitmap);
+
+
+
+                ByteArrayOutputStream streamdos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, streamdos);
+                byte[] byteArray = streamdos.toByteArray();
+                final ParseFile tmpfile = new ParseFile("experiencia.png", byteArray);
+                tmpfile.saveInBackground(new SaveCallback() {
+
+                    public void done(com.parse.ParseException e) {
+
+                        ArrayList<ParseFile> photos = new ArrayList<ParseFile>();
+                        photos.add(tmpfile);
+
+                        ParseObject testObject = new ParseObject("experience");
+                        testObject.put("title"      , "Experiencia muy aca");
+                        testObject.put("description", "Descripcion de experiencia muy aca");
+                        testObject.put("cityname"   , "Ciudad de México");
+                        testObject.put("photos"     , photos);
+                        testObject.saveInBackground();
+
+
+
+                    }
+
+                }, new ProgressCallback() {
+                    public void done(Integer percentDone) {
+                        Log.d("MainResult", "Subiendo Imagen con porcentaje: " + percentDone);
+                        // Update your progress spinner here. percentDone will be between 0 and 100.
+                    }
+                });
+
+
 
             }
             catch (FileNotFoundException e){
